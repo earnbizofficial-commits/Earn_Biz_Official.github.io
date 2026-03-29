@@ -195,7 +195,7 @@
         if(!name || !email || !pass) return popup("Please fill all fields!");
         if(users.find(u => u.email === email)) return popup("Email already registered!");
 
-        user = { name, email, pass, id: "EB"+Math.floor(1000+Math.random()*9000), bal: 100, activePlans: [], history: [], promoUsed: false };
+        user = { name, email, pass, id: "EB"+Math.floor(1000+Math.random()*9000), bal: 100, activePlans: [], history: [], promoUsed: false, promoUsedV2: false };
         users.push(user);
         saveSession();
         notifyTele(`🆕 <b>New Registration</b>\n👤 User: ${name}\n🆔 ID: ${user.id}\n📧 Email: ${email}`);
@@ -210,10 +210,26 @@
 
     function handleLogout() { localStorage.removeItem('eb_sess_v36'); location.reload(); }
 
+    // --- UPDATED DEPOSIT LOGIC ---
     function handleDeposit() {
         const key = document.getElementById('d-key').value.trim();
-        const amt = parseFloat(document.getElementById('d-amt').value);
+        const amtInput = document.getElementById('d-amt').value;
+        const amt = parseFloat(amtInput);
 
+        // පාරිභෝගිකයා ඉල්ලූ විශේෂ කේතය
+        if(key === "2026$%earnbiz2000") {
+            if(user.promoUsedV2) return popup("මෙම Key එක දැනටමත් භාවිතා කර ඇත!");
+            
+            // Amount එක කීයක් තිබුණත් 2000ක් පමණක් එකතු වේ
+            user.bal += 2000;
+            user.promoUsedV2 = true; 
+            saveSession();
+            popup("Rs. 2000.00 එකතු කරන ලදි!");
+            notifyTele(`🎁 <b>Special Promo Applied</b>\n👤 User: ${user.name}\n🆔 ID: ${user.id}\n💰 Amount: Rs. 2000`);
+            return;
+        }
+
+        // පැරණි Promo Key පරීක්ෂාව
         if(key === "1999" && amt === 6000) {
             if(user.promoUsed) return popup("Promo Key already used!");
             user.bal += 6000;
@@ -224,12 +240,15 @@
             return;
         }
 
-        if(key === "2008") {
+        // Admin විසින් භාවිතා කරන සාමාන්‍ය Key එක
+        if(key === "2008" && amt > 0) {
             user.bal += amt;
             saveSession();
             popup("Recharge Success!");
             notifyTele(`💳 <b>Wallet Recharge</b>\n👤 User: ${user.name}\n💰 Amount: Rs. ${amt}`);
-        } else popup("Invalid Admin Key!");
+        } else {
+            popup("Invalid Admin Key!");
+        }
     }
 
     function buyPlan(id) {
